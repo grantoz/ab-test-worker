@@ -1,0 +1,9 @@
+name = "ab-test-worker"
+type = "javascript"
+account_id = "30453c5aa5f9c1d619c02be3dc1ff572"
+workers_dev = true
+route = ""
+zone_id = ""
+kv_namespaces = [
+    { binding = "ABTEST", id = "6ad8507170a94c3fbd9aaff5d24a4105" }
+]
