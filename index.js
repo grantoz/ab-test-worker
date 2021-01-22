@@ -50,50 +50,56 @@ function assignTestGroup(test) {
   return group;
 }
 
-function getModifiedRequest(request) {
-  const myUrl = new URL('https://grantoz.github.io')
-  const modifiedRequest = new Request(myUrl, {
+function getUpstreamRequest(request, headers) {
+  // use updated headers if they have been passed, otherwise default to original request headers
+  const newHeaders = (typeof headers !== 'undefined') ? headers : request.headers
+
+  // currently just getting my blog page, not proxying Made
+  // const url = request.url
+  const url = new URL('https://grantoz.github.io')
+
+  // dev: use the header iterator to show what we'll be sending
+  for (let value of newHeaders.entries()) {
+    console.log(value);
+  }
+
+  const newRequest = new Request(url, {
     method: request.method,
-    headers: request.headers
+    headers: newHeaders
   })
-  return modifiedRequest;
+
+  return newRequest;
 }
 
 async function fetchAndApply(request) {
 
+  // convenience for URL parsing
   const url = new URL(request.url);
-
-  console.log(request.url)
-  console.log('pathname', url.pathname)
 
   // do not run for customerState requests
   if(url.pathname.includes('ajaxcalls/customerState')) {
     console.log('got customerState path match')
-    //return fetch(request)
-    return fetch(getModifiedRequest(request))
+    return fetch(getUpstreamRequest(request))
   }
 
   // do not run for static assets (TODO: \.html? bypass)
   if(url.pathname.match(/\.\w{2,4}$/)) {
     console.log('got static asset match')
-    //return fetch(request)
-    return fetch(getModifiedRequest(request))
+    return fetch(getUpstreamRequest(request))
   }
 
   // do not run for asset paths
   if (url.pathname.match(/^\/(media|skin|minify)/)) {
-    // unset query path
-    // unset cookie header
-    // set header: X-Varnish-Strip-Cookie: 1/
-
+    // TODO: unset query path
+    // TODO: unset cookie header
+    // TODO: set header: X-Varnish-Strip-Cookie: 1/
     console.log('got media path match')
-    //return fetch(request)
-    return fetch(getModifiedRequest(request))
+    return fetch(getUpstreamRequest(request))
   }
 
-  // TODO ?search parameter whitelisting and stripping
+  // TODO: ?search parameter whitelisting and stripping
 
-  // just for now, obviously - we will want to iterate on the array of tests
+  // TODO: iterate over tests, check path and date validity before running
   const test = tests[0];
 
   // 1. Determine which test group this request is in (TODO: refactor)
@@ -112,10 +118,9 @@ async function fetchAndApply(request) {
     isNew = true
   }
 
-  // 2. at this point we should look things up in the cache (TODO: refactor)
+  // 2. at this point we should look things up in the cache
 
-  // for now we'll assume that we always add the test x-header to the outbound request
-  // so that the backend can create a new 
+  // for now we'll add the test x-header to the outbound request, so that the backend can ID it
   const backendRequestHeaders = new Headers(request.headers)
   backendRequestHeaders.append(test.header, group)
 
@@ -123,14 +128,8 @@ async function fetchAndApply(request) {
   // let url = new URL(request.url)
   // url.pathname = `/${group}${url.pathname}`
 
-  const myUrl = new URL('https://grantoz.github.io')
-
-  const modifiedRequest = new Request(myUrl, {
-    method: request.method,
-    headers: backendRequestHeaders
-  })
-
-  const response = await fetch(modifiedRequest)
+  const upstreamRequest = getUpstreamRequest(request, backendRequestHeaders)
+  const response = await fetch(upstreamRequest)
 
   if (isNew) {
     // The experiment was newly-assigned, so add a Set-Cookie header to the response.
@@ -146,3 +145,4 @@ async function fetchAndApply(request) {
     return response
   }
 }
+
