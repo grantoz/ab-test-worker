@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "format": "prettier --write '**/*.{js,css,json,md}'"
+    "format": "prettier --write '**/*.{js,css,json,md}'",
+    "build": "webpack",
+    "build:watch": "webpack --watch",
+    "preview": "workers-preview < dist/bundle.js"
   },
   "author": "Grant Ozolins <grant.ozolins@gmail.com>",
   "license": "MIT",
