@@ -11,6 +11,9 @@
   "author": "Grant Ozolins <grant.ozolins@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "prettier": "^1.18.2"
+    "prettier": "^1.18.2",
+    "webpack": "^5.21.2",
+    "webpack-cli": "^4.5.0",
+    "workers-preview": "^1.0.6"
   }
 }
