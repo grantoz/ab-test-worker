@@ -1,3 +1,5 @@
+import { tests } from './tests.js'
+
 // Serve different variants of your site to different visitors
 addEventListener('fetch', event => {
   event.respondWith(fetchAndApply(event.request))
@@ -14,27 +16,10 @@ Object.freeze(testTypes);
 
 // presumably we will get these from consul / provisioning
 // we will also need some validation!!
-const tests = [
-  {
-    name:   "whole-site a-b test",
-    type:   testTypes.noCache,
-    start:  new Date('2021-01-01T00:00:00Z'), // default to UTC (Zulu) time, but can use other TZs
-    end:    new Date('2022-01-01T00:00:00Z'),
-    path:   "/",
-    cookie: "site-a-b",
-    header: "x-site-a-b",
-    split: [
-      {
-        label: "A",
-        percentage: 50
-      },
-      {
-        label: "B",
-        percentage: 50
-      },
-    ]
-  }
-]
+
+// just while we are testing this with ab.made-test.com
+const defaultBackend = 'https://made-test.com'
+const useDefaultBackend = true
 
 function assignTestGroup(test) {
   let inc = 0;
@@ -50,13 +35,17 @@ function assignTestGroup(test) {
   return group;
 }
 
-function getUpstreamRequest(request, headers) {
+function getRequest(request, headers) {
+
+  if (typeof headers !== 'undefined' && false === useDefaultBackend) {
+    return request
+  }
+
   // use updated headers if they have been passed, otherwise default to original request headers
   const newHeaders = (typeof headers !== 'undefined') ? headers : request.headers
 
-  // currently just getting my blog page, not proxying Made
-  // const url = request.url
-  const url = new URL('https://grantoz.github.io')
+  // use the defaultBackend (made-test.com, above) while this is still a POC
+  const url = new URL((useDefaultBackend) ? defaultBackend : request.url)
 
   // dev: use the header iterator to show what we'll be sending
   for (let value of newHeaders.entries()) {
@@ -79,13 +68,13 @@ async function fetchAndApply(request) {
   // do not run for customerState requests
   if(url.pathname.includes('ajaxcalls/customerState')) {
     console.log('got customerState path match')
-    return fetch(getUpstreamRequest(request))
+    return fetch(getRequest(request))
   }
 
   // do not run for static assets (TODO: \.html? bypass)
   if(url.pathname.match(/\.\w{2,4}$/)) {
     console.log('got static asset match')
-    return fetch(getUpstreamRequest(request))
+    return fetch(getRequest(request))
   }
 
   // do not run for asset paths
@@ -94,7 +83,7 @@ async function fetchAndApply(request) {
     // TODO: unset cookie header
     // TODO: set header: X-Varnish-Strip-Cookie: 1/
     console.log('got media path match')
-    return fetch(getUpstreamRequest(request))
+    return fetch(getRequest(request))
   }
 
   // TODO: ?search parameter whitelisting and stripping
@@ -128,7 +117,7 @@ async function fetchAndApply(request) {
   // let url = new URL(request.url)
   // url.pathname = `/${group}${url.pathname}`
 
-  const upstreamRequest = getUpstreamRequest(request, backendRequestHeaders)
+  const upstreamRequest = getRequest(request, backendRequestHeaders)
   const response = await fetch(upstreamRequest)
 
   if (isNew) {
@@ -145,4 +134,3 @@ async function fetchAndApply(request) {
     return response
   }
 }
-
