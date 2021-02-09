@@ -1,3 +1,12 @@
+// psuedo-enum implementation
+const testTypes = {
+  cache: 1,
+  noCache: 2,     // todo
+  redirect: 3,    // todo
+  pathRewrite: 4  // todo
+}
+Object.freeze(testTypes);
+
 export const tests = [
   {
     name:   "whole-site a-b test",

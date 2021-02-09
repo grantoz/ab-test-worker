@@ -5,15 +5,6 @@ addEventListener('fetch', event => {
   event.respondWith(fetchAndApply(event.request))
 })
 
-// psuedo-enum implementation
-const testTypes = {
-  cache: 1,
-  noCache: 2,     // todo
-  redirect: 3,    // todo
-  pathRewrite: 4  // todo
-}
-Object.freeze(testTypes);
-
 // presumably we will get these from consul / provisioning
 // we will also need some validation!!
 
